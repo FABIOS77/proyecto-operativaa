@@ -1,0 +1,273 @@
+<div class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
+  
+  <!-- HEADER -->
+  <header class="bg-indigo-900 text-white pt-6 pb-24 px-6 relative overflow-hidden shadow-2xl">
+    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(white 1px, transparent 1px); background-size: 30px 30px;"></div>
+    <div class="max-w-7xl mx-auto flex justify-between items-center relative z-10">
+      <div class="flex items-center gap-4">
+        <div class="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/20">
+          <lucide-icon name="calculator" class="w-8 h-8 text-white"></lucide-icon>
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight text-white">SimplexVision</h1>
+          <p class="text-indigo-200 text-sm flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" [ngClass]="backendStatus === 'online' ? 'bg-emerald-400 animate-pulse' : 'bg-red-500'"></span>
+            Método Gráfico Interactivo
+          </p>
+        </div>
+      </div>
+      
+      <button (click)="downloadReport()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-emerald-900/20 transition flex items-center gap-2 text-sm font-bold active:scale-95">
+        <lucide-icon name="file-spreadsheet" class="w-4 h-4"></lucide-icon> Exportar Reporte
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 -mt-16 relative z-20">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- PANEL IZQUIERDO: CONTROLES -->
+      <div class="lg:col-span-4 space-y-6">
+        
+        <!-- TARJETA: FUNCIÓN OBJETIVO -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden transform transition hover:shadow-2xl">
+          <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wide">
+              <lucide-icon name="trending-up" class="w-4 h-4 text-indigo-500"></lucide-icon> Función Objetivo
+            </h3>
+            <div class="flex bg-slate-200 rounded-lg p-1">
+              <button (click)="setMaximize(true)" [class]="maximize ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1 text-xs font-bold rounded-md transition-all">MAX</button>
+              <button (click)="setMaximize(false)" [class]="!maximize ? 'bg-white shadow text-rose-600' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1 text-xs font-bold rounded-md transition-all">MIN</button>
+            </div>
+          </div>
+          <div class="p-6 bg-white">
+            <div class="flex items-center gap-3 text-xl font-mono">
+              <span class="font-bold text-slate-400 italic">Z =</span>
+              <div class="relative flex-1 group">
+                <input [(ngModel)]="objective.x" (ngModelChange)="triggerSolve()" type="number" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3 px-3 text-center focus:border-indigo-500 focus:ring-0 outline-none font-bold text-slate-700 transition-colors">
+                <span class="absolute right-3 top-3.5 text-slate-400 text-xs font-bold pointer-events-none">X₁</span>
+              </div>
+              <span class="text-slate-300 font-bold">+</span>
+              <div class="relative flex-1 group">
+                <input [(ngModel)]="objective.y" (ngModelChange)="triggerSolve()" type="number" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3 px-3 text-center focus:border-indigo-500 focus:ring-0 outline-none font-bold text-slate-700 transition-colors">
+                <span class="absolute right-3 top-3.5 text-slate-400 text-xs font-bold pointer-events-none">X₂</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TARJETA: RESTRICCIONES -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col max-h-[500px]">
+          <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center sticky top-0 z-10">
+            <h3 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wide">
+              <lucide-icon name="grip" class="w-4 h-4 text-emerald-500"></lucide-icon> Restricciones
+            </h3>
+            <button (click)="addConstraint()" class="text-xs bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-100 font-bold transition flex items-center gap-1 active:scale-95">
+              <lucide-icon name="plus" class="w-3 h-3"></lucide-icon> Agregar
+            </button>
+          </div>
+          
+          <div class="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-1">
+            <div *ngFor="let c of constraints; let i = index" class="flex items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 group hover:border-emerald-200 hover:shadow-sm transition-all animate-in slide-in-from-left-2 duration-300">
+              <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 group-hover:bg-emerald-100 group-hover:text-emerald-600 flex items-center justify-center text-xs font-bold transition-colors">{{i+1}}</div>
+              
+              <input [(ngModel)]="c.x" (ngModelChange)="triggerSolve()" type="number" class="w-14 bg-white border border-slate-200 rounded px-1 text-center text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none font-medium">
+              <span class="text-[10px] text-slate-400 font-bold">X₁</span>
+              <span class="text-slate-300 font-bold text-lg">+</span>
+              
+              <input [(ngModel)]="c.y" (ngModelChange)="triggerSolve()" type="number" class="w-14 bg-white border border-slate-200 rounded px-1 text-center text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none font-medium">
+              <span class="text-[10px] text-slate-400 font-bold">X₂</span>
+              
+              <select [(ngModel)]="c.operator" (ngModelChange)="triggerSolve()" class="bg-slate-200 border-none rounded px-1 py-1 text-sm font-bold text-slate-700 cursor-pointer focus:ring-0 mx-1">
+                <option value="<=">≤</option>
+                <option value=">=">≥</option>
+                <option value="=">=</option>
+              </select>
+              
+              <input [(ngModel)]="c.rhs" (ngModelChange)="triggerSolve()" type="number" class="flex-1 min-w-[3rem] bg-white border border-slate-200 rounded px-2 py-1 text-center text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none font-bold text-slate-700">
+              
+              <button (click)="removeConstraint(i)" class="text-slate-300 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer" title="Eliminar restricción">
+                <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
+              </button>
+            </div>
+            
+            <div *ngIf="constraints.length === 0" class="text-center py-10 text-slate-400 flex flex-col items-center gap-2 border-2 border-dashed border-slate-200 rounded-xl">
+              <lucide-icon name="x-circle" class="w-8 h-8 text-slate-200"></lucide-icon>
+              <span class="text-sm">Sin restricciones activas</span>
+            </div>
+          </div>
+          
+          <div class="bg-slate-50 px-6 py-2 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-center uppercase tracking-widest font-bold">
+            X₁, X₂ ≥ 0
+          </div>
+        </div>
+
+        <!-- SOLUCIÓN DESTACADA -->
+         <div *ngIf="solution?.status === 'Optimal'" class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden animate-in zoom-in duration-500">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+            <h3 class="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
+              <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Solución Óptima
+            </h3>
+            <div class="flex items-baseline gap-2 mb-6">
+              <span class="text-5xl font-bold tracking-tighter">{{ solution?.optimal_solution?.z_value | number:'1.0-2' }}</span>
+              <span class="text-indigo-300 font-mono text-sm">Valor Z</span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-white/10 rounded-xl p-3 backdrop-blur-md border border-white/10">
+                <span class="text-indigo-200 text-[10px] uppercase font-bold tracking-wider block mb-1">Variable X₁</span>
+                <div class="font-mono text-2xl font-bold">{{ solution?.optimal_solution?.point?.x | number:'1.0-2' }}</div>
+              </div>
+              <div class="bg-white/10 rounded-xl p-3 backdrop-blur-md border border-white/10">
+                <span class="text-indigo-200 text-[10px] uppercase font-bold tracking-wider block mb-1">Variable X₂</span>
+                <div class="font-mono text-2xl font-bold">{{ solution?.optimal_solution?.point?.y | number:'1.0-2' }}</div>
+              </div>
+            </div>
+         </div>
+
+         <!-- ERROR STATE -->
+         <div *ngIf="solution && solution.status !== 'Optimal'" class="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-rose-700 flex flex-col items-center text-center animate-in shake">
+            <lucide-icon name="x-circle" class="w-8 h-8 mb-2 opacity-50"></lucide-icon>
+            <div class="font-bold">Sin solución óptima</div>
+            <div class="text-xs mt-1 opacity-80">El problema puede ser infactible (sin región común) o no acotado (infinito).</div>
+         </div>
+
+      </div>
+
+      <!-- PANEL DERECHO: GRÁFICO (8 cols) -->
+      <div class="lg:col-span-8">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden h-[650px] flex flex-col relative group">
+          
+          <!-- LEYENDA Y CONTROLES FLOTANTES -->
+          <div class="absolute top-4 right-4 z-10 flex flex-col gap-2 opacity-90 hover:opacity-100 transition-opacity">
+            <button (click)="resetCamera()" class="bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 flex items-center gap-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer mb-2">
+               <lucide-icon name="refresh-cw" class="w-3 h-3"></lucide-icon> Centrar Vista
+            </button>
+            <div class="bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm border border-emerald-200 flex items-center gap-2 text-xs font-bold text-emerald-700 pointer-events-none">
+              <div class="w-4 h-4 bg-emerald-500/20 border border-emerald-500 rounded-sm"></div> Región Factible
+            </div>
+            <div class="bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm border border-rose-200 flex items-center gap-2 text-xs font-bold text-rose-600 pointer-events-none">
+               <div class="w-6 h-0 border-t-2 border-dashed border-rose-500"></div> Función Objetivo
+            </div>
+          </div>
+
+          <!-- AVISO DE INTERACCIÓN -->
+          <div class="absolute bottom-12 left-1/2 transform -translate-x-1/2 bg-black/50 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
+             Arrastra para mover • Rueda para Zoom
+          </div>
+
+          <!-- LIENZO SVG -->
+          <div class="flex-1 bg-slate-50 relative cursor-grab active:cursor-grabbing overflow-hidden" #graphContainer
+               (mousedown)="onMouseDown($event)"
+               (mousemove)="onMouseMove($event)"
+               (mouseup)="onMouseUp()"
+               (mouseleave)="onMouseUp()"
+               (wheel)="onWheel($event)">
+            
+            <svg *ngIf="viewBox" [attr.viewBox]="viewBox" class="w-full h-full transform scale-y-[-1] origin-center select-none" preserveAspectRatio="xMidYMid meet">
+              
+              <!-- DEFS -->
+              <defs>
+                <pattern id="smallGrid" [attr.width]="gridSize" [attr.height]="gridSize" patternUnits="userSpaceOnUse">
+                  <path [attr.d]="'M ' + gridSize + ' 0 L 0 0 0 ' + gridSize" fill="none" stroke="#e2e8f0" [attr.stroke-width]="gridSize * 0.05"/>
+                </pattern>
+              </defs>
+
+              <!-- FONDO -->
+              <!-- Usamos rectángulos gigantes para cubrir todo el espacio navegable -->
+              <rect x="-1000" y="-1000" width="2000" height="2000" fill="#f8fafc" />
+              <rect x="-1000" y="-1000" width="2000" height="2000" fill="url(#smallGrid)" />
+
+              <!-- EJE X e Y (Líneas principales) -->
+              <line x1="-1000" y1="0" x2="1000" y2="0" stroke="#94a3b8" [attr.stroke-width]="gridSize * 0.1" />
+              <line x1="0" y1="-1000" x2="0" y2="1000" stroke="#94a3b8" [attr.stroke-width]="gridSize * 0.1" />
+
+              <!-- ETIQUETAS DE EJES (Números) -->
+              <!-- Ajustar tamaño de fuente dinámico según gridSize -->
+              <g [attr.font-size]="gridSize * 0.3 + 'px'" font-family="monospace" fill="#64748b" text-anchor="middle">
+                <!-- Eje X Ticks -->
+                <g *ngFor="let x of xTicks">
+                  <line [attr.x1]="x" [attr.y1]="-gridSize*0.1" [attr.x2]="x" [attr.y2]="gridSize*0.1" stroke="#cbd5e1" [attr.stroke-width]="gridSize*0.05"/>
+                  <text [attr.x]="x" [attr.y]="-gridSize*0.3" transform="scale(1, -1)" class="select-none font-bold">{{x | number:'1.0-1'}}</text>
+                </g>
+                <!-- Eje Y Ticks -->
+                <g *ngFor="let y of yTicks">
+                  <line [attr.x1]="-gridSize*0.1" [attr.y1]="y" [attr.x2]="gridSize*0.1" [attr.y2]="y" stroke="#cbd5e1" [attr.stroke-width]="gridSize*0.05"/>
+                  <text [attr.x]="-gridSize*0.4" [attr.y]="-y" transform="scale(1, -1)" class="select-none font-bold" dominant-baseline="middle">{{y | number:'1.0-1'}}</text>
+                </g>
+              </g>
+
+              <!-- REGIÓN FACTIBLE -->
+              <polygon *ngIf="(solution?.feasible_region?.length || 0) > 2" 
+                       [attr.points]="getPolygonPoints()" 
+                       fill="#10b981" 
+                       fill-opacity="0.25" 
+                       stroke="#059669" 
+                       [attr.stroke-width]="gridSize * 0.1"
+                       class="transition-all duration-700 ease-in-out"/>
+
+              <!-- RESTRICCIONES -->
+              <g *ngFor="let line of renderLines">
+                <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" 
+                      stroke="#64748b" [attr.stroke-width]="gridSize * 0.08" stroke-dasharray="0.3, 0.2" opacity="0.5" />
+              </g>
+
+              <!-- FUNCIÓN OBJETIVO -->
+              <line *ngIf="solution?.optimal_solution?.point"
+                    [attr.x1]="objLine.x1" [attr.y1]="objLine.y1" 
+                    [attr.x2]="objLine.x2" [attr.y2]="objLine.y2"
+                    stroke="#e11d48" 
+                    [attr.stroke-width]="gridSize * 0.15" 
+                    stroke-dasharray="0.5, 0.2"
+                    class="transition-all duration-1000 ease-out opacity-80" />
+              
+              <!-- PUNTO ÓPTIMO Y ETIQUETA -->
+              <g *ngIf="solution?.optimal_solution?.point">
+                <!-- Efecto Radar -->
+                <circle [attr.cx]="solution?.optimal_solution?.point?.x" 
+                        [attr.cy]="solution?.optimal_solution?.point?.y" 
+                        [attr.r]="gridSize * 0.5" fill="#e11d48" class="animate-ping" opacity="0.3"/>
+                <!-- Punto real -->
+                <circle [attr.cx]="solution?.optimal_solution?.point?.x" 
+                        [attr.cy]="solution?.optimal_solution?.point?.y" 
+                        [attr.r]="gridSize * 0.15" fill="#e11d48" stroke="white" [attr.stroke-width]="gridSize * 0.05"/>
+                
+                <!-- Etiqueta de coordenadas (Tooltip fijo) -->
+                <g [attr.transform]="'translate(' + solution?.optimal_solution?.point?.x + ',' + solution?.optimal_solution?.point?.y + ') scale(1, -1)'">
+                   <foreignObject [attr.x]="gridSize * 0.2" [attr.y]="-gridSize * 0.5" width="200" height="100" style="overflow: visible;">
+                      <div xmlns="http://www.w3.org/1999/xhtml" class="bg-indigo-900 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap opacity-90 inline-block font-mono">
+                        (X₁:{{ solution?.optimal_solution?.point?.x | number:'1.0-1' }}, X₂:{{ solution?.optimal_solution?.point?.y | number:'1.0-1' }})
+                      </div>
+                   </foreignObject>
+                </g>
+              </g>
+
+            </svg>
+
+            <!-- Loading Spinner -->
+            <div *ngIf="loading" class="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center z-50 transition-opacity duration-300">
+               <lucide-icon name="refresh-cw" class="w-10 h-10 text-indigo-600 animate-spin mb-3"></lucide-icon>
+               <span class="text-indigo-900 font-bold text-sm tracking-wide">OPTIMIZANDO...</span>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!loading && !solution" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+               <lucide-icon name="grip" class="w-12 h-12 mb-2 opacity-50"></lucide-icon>
+               <p class="text-sm font-medium">Configura las restricciones para comenzar</p>
+            </div>
+          </div>
+          
+          <!-- Barra de Estado Inferior -->
+          <div class="bg-white px-4 py-2 border-t border-slate-200 flex justify-between text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+            <div>Vista: [{{ camX | number:'1.0-0' }}, {{ camY | number:'1.0-0' }}]</div>
+            <div class="flex gap-4">
+              <span>Zoom: {{ 12 / camWidth | percent }}</span>
+              <span *ngIf="solution?.status === 'Optimal'" class="text-emerald-600 font-bold">Estado: Óptimo Global</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>

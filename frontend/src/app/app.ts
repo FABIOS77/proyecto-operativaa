@@ -30,26 +30,23 @@ export class AppComponent implements OnInit {
 
   solution: GraphicSolution | null = null;
 
-  // --- LÓGICA DE CÁMARA (PAN & ZOOM) ---
+  // --- MODO PASO A PASO (NUEVO) ---
+  isStepMode = false;
+  currentStep = 0;
+  totalSteps = 0;
+  stepDescription = '';
+  
+  // --- CÁMARA & VISUALIZACIÓN ---
   viewBox = "-1 -1 12 12";
-  
-  // ¡CORRECCIÓN!: Estas variables deben ser PÚBLICAS para que el HTML las lea.
-  // Quitamos la palabra 'private'.
-  camX = 0;
-  camY = 0;
-  camWidth = 12;
-  camHeight = 12;
-  
+  camX = 0; camY = 0; camWidth = 12; camHeight = 12;
   private isDragging = false;
   private lastMouseX = 0;
   private lastMouseY = 0;
 
-  // Grilla
   gridSize = 1;
   xTicks: number[] = [];
   yTicks: number[] = [];
 
-  // Objetos de Renderizado
   renderLines: any[] = [];
   objLine = { x1: 0, y1: 0, x2: 0, y2: 0 };
 
@@ -67,13 +64,92 @@ export class AppComponent implements OnInit {
       next: () => this.backendStatus = 'online',
       error: () => this.backendStatus = 'offline'
     });
-    
-    // Ejecutar inmediatamente. 
-    // Usamos setTimeout(..., 0) para moverlo al final de la cola de ejecución 
-    // y asegurar que la vista ya esté lista para recibir datos.
     setTimeout(() => this.executeSolve(), 0);
   }
 
+  // --- LÓGICA PASO A PASO (NUEVA) ---
+
+  startStepMode() {
+    if (!this.solution) return;
+    this.isStepMode = true;
+    this.currentStep = 0;
+    // Pasos: 1 por cada restricción + 1 Región Factible + 1 Función Objetivo + 1 Óptimo
+    this.totalSteps = this.constraints.length + 3; 
+    this.updateStep();
+  }
+
+  nextStep() {
+    if (this.currentStep < this.totalSteps) {
+      this.currentStep++;
+      this.updateStep();
+    } else {
+      this.exitStepMode(); // Terminar al final
+    }
+  }
+
+  prevStep() {
+    if (this.currentStep > 1) {
+      this.currentStep--;
+      this.updateStep();
+    }
+  }
+
+  exitStepMode() {
+    this.isStepMode = false;
+    this.currentStep = 0;
+  }
+
+  updateStep() {
+    // Generar narrativa según el paso
+    if (this.currentStep <= this.constraints.length) {
+      // Estamos dibujando restricciones
+      const idx = this.currentStep - 1;
+      const c = this.constraints[idx];
+      this.stepDescription = `Paso ${this.currentStep}: Graficamos la restricción #${idx+1} (${c.x}x₁ + ${c.y}x₂ ${c.operator} ${c.rhs}). La solución debe estar ${c.operator.includes('<') ? 'debajo/izquierda' : 'arriba/derecha'} de esta línea.`;
+    } else if (this.currentStep === this.constraints.length + 1) {
+      this.stepDescription = `Paso ${this.currentStep}: Identificamos la Región Factible (área verde). Es la intersección de todas las áreas válidas.`;
+    } else if (this.currentStep === this.constraints.length + 2) {
+      this.stepDescription = `Paso ${this.currentStep}: Graficamos la Función Objetivo (Z). Buscamos la línea de isocoste más lejana posible.`;
+    } else {
+      this.stepDescription = `Paso Final: Encontramos el vértice óptimo. Aquí Z alcanza su valor ${this.maximize ? 'máximo' : 'mínimo'} de ${this.solution?.optimal_solution?.z_value}.`;
+    }
+  }
+
+  // Helper para el HTML: ¿Debe mostrarse esta restricción?
+  shouldShowConstraint(index: number): boolean {
+    if (!this.isStepMode) return true; // Modo normal: mostrar todo
+    return (index + 1) <= this.currentStep;
+  }
+
+  shouldShowFeasible(): boolean {
+    if (!this.isStepMode) return true;
+    // Mostrar región factible después de dibujar todas las líneas
+    return this.currentStep > this.constraints.length;
+  }
+
+  shouldShowObjective(): boolean {
+    if (!this.isStepMode) return true;
+    return this.currentStep > this.constraints.length + 1;
+  }
+
+  shouldShowOptimal(): boolean {
+    if (!this.isStepMode) return true;
+    return this.currentStep > this.constraints.length + 2;
+  }
+
+  // --- FIN LÓGICA PASO A PASO ---
+
+  // ... (Resto del código de cámara, mouse, solve, etc. IGUAL QUE ANTES) ...
+  // ... Copia aquí las funciones onWheel, onMouseDown, executeSolve, etc. ...
+  
+  // Para ahorrar espacio en este chat, asumo que mantienes las funciones anteriores
+  // Asegúrate de copiar onWheel, onMouseDown, onMouseMove, onMouseUp, resetCamera, 
+  // updateViewBoxStr, triggerSolve, setMaximize, addConstraint, removeConstraint, 
+  // executeSolve, downloadReport, autoFit, generateTicks, calculateLineSegment, 
+  // calculateObjectiveLine, getPolygonPoints
+  
+  // IMPORTANTE: Asegúrate de incluir estas funciones aquí. Si necesitas que te las repita, avísame.
+  
   // --- INTERACCIÓN CON EL GRÁFICO (MOUSE) ---
 
   onWheel(event: WheelEvent) {
@@ -166,7 +242,6 @@ export class AppComponent implements OnInit {
         retry(1),
         finalize(() => {
           this.loading = false;
-          // Forzar chequeo final para quitar spinner
           this.cdr.detectChanges(); 
         })
       )
@@ -175,8 +250,6 @@ export class AppComponent implements OnInit {
           this.solution = res;
           try {
             this.autoFit(res); 
-            // ¡IMPORTANTE! Forzamos la actualización de la vista AQUÍ MISMO
-            // Esto evita que tengas que mover el mouse para ver los cambios.
             this.cdr.detectChanges(); 
           } catch (e) {
             console.warn("Error visual:", e);

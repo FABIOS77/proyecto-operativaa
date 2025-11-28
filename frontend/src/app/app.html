@@ -17,9 +17,16 @@
         </div>
       </div>
       
-      <button (click)="downloadReport()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-emerald-900/20 transition flex items-center gap-2 text-sm font-bold active:scale-95">
-        <lucide-icon name="file-spreadsheet" class="w-4 h-4"></lucide-icon> Exportar Reporte
-      </button>
+      <div class="flex gap-3">
+        <!-- BOTÓN NUEVO: EXPLICAR -->
+        <button (click)="startStepMode()" *ngIf="solution?.status === 'Optimal' && !isStepMode" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-lg shadow-lg transition flex items-center gap-2 text-sm font-bold active:scale-95 animate-in fade-in">
+          <lucide-icon name="presentation" class="w-4 h-4"></lucide-icon> Explicar Solución
+        </button>
+        
+        <button (click)="downloadReport()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-emerald-900/20 transition flex items-center gap-2 text-sm font-bold active:scale-95">
+          <lucide-icon name="file-spreadsheet" class="w-4 h-4"></lucide-icon> Exportar Reporte
+        </button>
+      </div>
     </div>
   </header>
 
@@ -68,7 +75,10 @@
           </div>
           
           <div class="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-1">
-            <div *ngFor="let c of constraints; let i = index" class="flex items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 group hover:border-emerald-200 hover:shadow-sm transition-all animate-in slide-in-from-left-2 duration-300">
+            <div *ngFor="let c of constraints; let i = index" 
+                 class="flex items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 group hover:border-emerald-200 hover:shadow-sm transition-all animate-in slide-in-from-left-2 duration-300"
+                 [ngClass]="{'ring-2 ring-indigo-500 bg-indigo-50': isStepMode && (i + 1) === currentStep}"> <!-- Resaltado Activo -->
+              
               <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 group-hover:bg-emerald-100 group-hover:text-emerald-600 flex items-center justify-center text-xs font-bold transition-colors">{{i+1}}</div>
               
               <input [(ngModel)]="c.x" (ngModelChange)="triggerSolve()" type="number" class="w-14 bg-white border border-slate-200 rounded px-1 text-center text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none font-medium">
@@ -129,7 +139,7 @@
          <div *ngIf="solution && solution.status !== 'Optimal'" class="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-rose-700 flex flex-col items-center text-center animate-in shake">
             <lucide-icon name="x-circle" class="w-8 h-8 mb-2 opacity-50"></lucide-icon>
             <div class="font-bold">Sin solución óptima</div>
-            <div class="text-xs mt-1 opacity-80">El problema puede ser infactible (sin región común) o no acotado (infinito).</div>
+            <div class="text-xs mt-1 opacity-80">El problema puede ser infactible o no acotado.</div>
          </div>
 
       </div>
@@ -138,6 +148,32 @@
       <div class="lg:col-span-8">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden h-[650px] flex flex-col relative group">
           
+          <!-- OVERLAY DE TUTORIAL / PASO A PASO (NUEVO) -->
+          <div *ngIf="isStepMode" class="absolute top-0 left-0 right-0 z-30 p-6 bg-gradient-to-b from-slate-900/90 to-transparent pointer-events-none">
+             <div class="bg-white rounded-xl shadow-2xl p-4 border border-indigo-100 flex items-center justify-between gap-4 pointer-events-auto animate-in slide-in-from-top-4">
+                <div class="flex items-center gap-4">
+                   <div class="bg-indigo-100 text-indigo-700 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border border-indigo-200 shadow-sm">
+                     {{ currentStep }}
+                   </div>
+                   <div>
+                     <h4 class="font-bold text-slate-800 text-sm">Análisis Paso a Paso</h4>
+                     <p class="text-slate-600 text-xs">{{ stepDescription }}</p>
+                   </div>
+                </div>
+                <div class="flex gap-2">
+                   <button (click)="prevStep()" [disabled]="currentStep <= 1" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-50 transition">
+                     <lucide-icon name="arrow-left" class="w-4 h-4"></lucide-icon>
+                   </button>
+                   <button (click)="nextStep()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-indigo-200 transition flex items-center gap-2">
+                     {{ currentStep === totalSteps ? 'Finalizar' : 'Siguiente' }} <lucide-icon name="arrow-right" class="w-4 h-4"></lucide-icon>
+                   </button>
+                   <button (click)="exitStepMode()" class="text-slate-400 hover:text-rose-500 p-2 ml-2 transition">
+                     <lucide-icon name="x" class="w-4 h-4"></lucide-icon>
+                   </button>
+                </div>
+             </div>
+          </div>
+
           <!-- LEYENDA Y CONTROLES FLOTANTES -->
           <div class="absolute top-4 right-4 z-10 flex flex-col gap-2 opacity-90 hover:opacity-100 transition-opacity">
             <button (click)="resetCamera()" class="bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 flex items-center gap-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer mb-2">
@@ -174,7 +210,6 @@
               </defs>
 
               <!-- FONDO -->
-              <!-- Usamos rectángulos gigantes para cubrir todo el espacio navegable -->
               <rect x="-1000" y="-1000" width="2000" height="2000" fill="#f8fafc" />
               <rect x="-1000" y="-1000" width="2000" height="2000" fill="url(#smallGrid)" />
 
@@ -183,46 +218,46 @@
               <line x1="0" y1="-1000" x2="0" y2="1000" stroke="#94a3b8" [attr.stroke-width]="gridSize * 0.1" />
 
               <!-- ETIQUETAS DE EJES (Números) -->
-              <!-- Ajustar tamaño de fuente dinámico según gridSize -->
               <g [attr.font-size]="gridSize * 0.3 + 'px'" font-family="monospace" fill="#64748b" text-anchor="middle">
-                <!-- Eje X Ticks -->
                 <g *ngFor="let x of xTicks">
                   <line [attr.x1]="x" [attr.y1]="-gridSize*0.1" [attr.x2]="x" [attr.y2]="gridSize*0.1" stroke="#cbd5e1" [attr.stroke-width]="gridSize*0.05"/>
                   <text [attr.x]="x" [attr.y]="-gridSize*0.3" transform="scale(1, -1)" class="select-none font-bold">{{x | number:'1.0-1'}}</text>
                 </g>
-                <!-- Eje Y Ticks -->
                 <g *ngFor="let y of yTicks">
                   <line [attr.x1]="-gridSize*0.1" [attr.y1]="y" [attr.x2]="gridSize*0.1" [attr.y2]="y" stroke="#cbd5e1" [attr.stroke-width]="gridSize*0.05"/>
                   <text [attr.x]="-gridSize*0.4" [attr.y]="-y" transform="scale(1, -1)" class="select-none font-bold" dominant-baseline="middle">{{y | number:'1.0-1'}}</text>
                 </g>
               </g>
 
-              <!-- REGIÓN FACTIBLE -->
-              <polygon *ngIf="(solution?.feasible_region?.length || 0) > 2" 
+              <!-- RESTRICCIONES (ANIMADAS POR PASOS) -->
+              <!-- Usamos shouldShowConstraint(i) para filtrar -->
+              <g *ngFor="let line of renderLines; let i = index">
+                <line *ngIf="shouldShowConstraint(i)" 
+                      [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" 
+                      stroke="#64748b" [attr.stroke-width]="gridSize * 0.08" stroke-dasharray="0.3, 0.2" opacity="0.8" 
+                      class="animate-in fade-in duration-700"/>
+              </g>
+
+              <!-- REGIÓN FACTIBLE (ANIMADA) -->
+              <polygon *ngIf="(solution?.feasible_region?.length || 0) > 2 && shouldShowFeasible()" 
                        [attr.points]="getPolygonPoints()" 
                        fill="#10b981" 
                        fill-opacity="0.25" 
                        stroke="#059669" 
                        [attr.stroke-width]="gridSize * 0.1"
-                       class="transition-all duration-700 ease-in-out"/>
+                       class="transition-all duration-700 ease-in-out animate-in zoom-in fade-in"/>
 
-              <!-- RESTRICCIONES -->
-              <g *ngFor="let line of renderLines">
-                <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" 
-                      stroke="#64748b" [attr.stroke-width]="gridSize * 0.08" stroke-dasharray="0.3, 0.2" opacity="0.5" />
-              </g>
-
-              <!-- FUNCIÓN OBJETIVO -->
-              <line *ngIf="solution?.optimal_solution?.point"
+              <!-- FUNCIÓN OBJETIVO (ANIMADA) -->
+              <line *ngIf="solution?.optimal_solution?.point && shouldShowObjective()"
                     [attr.x1]="objLine.x1" [attr.y1]="objLine.y1" 
                     [attr.x2]="objLine.x2" [attr.y2]="objLine.y2"
                     stroke="#e11d48" 
                     [attr.stroke-width]="gridSize * 0.15" 
                     stroke-dasharray="0.5, 0.2"
-                    class="transition-all duration-1000 ease-out opacity-80" />
+                    class="transition-all duration-1000 ease-out opacity-80 animate-in slide-in-from-left-10" />
               
               <!-- PUNTO ÓPTIMO Y ETIQUETA -->
-              <g *ngIf="solution?.optimal_solution?.point">
+              <g *ngIf="solution?.optimal_solution?.point && shouldShowOptimal()" class="animate-in zoom-in duration-500">
                 <!-- Efecto Radar -->
                 <circle [attr.cx]="solution?.optimal_solution?.point?.x" 
                         [attr.cy]="solution?.optimal_solution?.point?.y" 

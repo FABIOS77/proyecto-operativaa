@@ -10,7 +10,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 def health_check():
     return jsonify({
         "status": "online",
-        "mode": "Linear Programming Graphical Method",
+        "mode": "SimplexVision Graphic Engine",
         "engine": "NumPy + PuLP"
     })
 
@@ -19,14 +19,11 @@ def solve_graphic():
     try:
         data = request.json
         
-        # Formato esperado del JSON:
+        # Estructura esperada:
         # {
         #   "maximize": true,
         #   "objective": {"x": 3, "y": 2},
-        #   "constraints": [
-        #       {"x": 1, "y": 2, "operator": "<=", "rhs": 6},
-        #       ...
-        #   ]
+        #   "constraints": [{"x": 1, "y": 2, "operator": "<=", "rhs": 6}, ...]
         # }
         
         result = LinearProgrammingEngine.solve_and_generate_geometry(
@@ -45,16 +42,23 @@ def solve_graphic():
 def export_report():
     try:
         data = request.json
-        # Re-calculamos (o podríamos guardar en cache/sesión) para generar el excel
+        
+        # 1. Recalcular solución para asegurar datos frescos
         result = LinearProgrammingEngine.solve_and_generate_geometry(
             data['objective'],
             data['constraints'],
             data.get('maximize', True)
         )
         
-        excel_file = LinearProgrammingEngine.generate_excel_report(result)
+        # 2. Generar Excel Avanzado (pasando contexto: objetivo y restricciones)
+        excel_file = LinearProgrammingEngine.generate_excel_report(
+            result,
+            data['objective'],
+            data['constraints'],
+            data.get('maximize', True)
+        )
         
-        filename = f"Reporte_PL_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        filename = f"SimplexVision_Report_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
         
         return send_file(
             excel_file,
@@ -64,6 +68,7 @@ def export_report():
         )
 
     except Exception as e:
+        print(f"Error generando reporte: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

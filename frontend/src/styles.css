@@ -3,11 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Estilos globales extra */
+
 html,
 body {
     height: 100%;
     background-color: #f8fafc;
-    /* Slate-50 */
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }

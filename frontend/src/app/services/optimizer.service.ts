@@ -33,7 +33,6 @@ export interface GraphicSolution {
     providedIn: 'root'
 })
 export class OptimizerService {
-    // Ajusta la URL si tu backend corre en otro puerto
     private apiUrl = 'http://127.0.0.1:5000/api';
 
     constructor(private http: HttpClient) { }

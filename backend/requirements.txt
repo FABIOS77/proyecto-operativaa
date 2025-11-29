@@ -4,3 +4,5 @@ pulp
 pandas
 openpyxl
 numpy
+matplotlib
+xlsxwriter

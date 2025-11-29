@@ -18,20 +18,11 @@ def health_check():
 def solve_graphic():
     try:
         data = request.json
-        
-        # Estructura esperada:
-        # {
-        #   "maximize": true,
-        #   "objective": {"x": 3, "y": 2},
-        #   "constraints": [{"x": 1, "y": 2, "operator": "<=", "rhs": 6}, ...]
-        # }
-        
         result = LinearProgrammingEngine.solve_and_generate_geometry(
             data['objective'],
             data['constraints'],
             data.get('maximize', True)
         )
-        
         return jsonify(result)
 
     except Exception as e:
@@ -43,14 +34,12 @@ def export_report():
     try:
         data = request.json
         
-        # 1. Recalcular solución para asegurar datos frescos
         result = LinearProgrammingEngine.solve_and_generate_geometry(
             data['objective'],
             data['constraints'],
             data.get('maximize', True)
         )
         
-        # 2. Generar Excel Avanzado (pasando contexto: objetivo y restricciones)
         excel_file = LinearProgrammingEngine.generate_excel_report(
             result,
             data['objective'],

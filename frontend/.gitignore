@@ -39,8 +39,20 @@ testem.log
 __screenshots__/
 
 # System files
-.DS_Store
+.DS_Store   
 Thumbs.db
 
 __pycache__/
 *.pyc
+
+# Ignorar entornos virtuales
+venv/
+*/venv/
+
+# Ignorar cachés de Python
+__pycache__/
+*.pyc
+
+# Ignorar dependencias instaladas
+*.dist-info/
+*.egg-info/
